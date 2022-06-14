@@ -1,0 +1,5 @@
+**/*.o
+a.out
+**/.DS_Store
+include/continuable
+include/function2

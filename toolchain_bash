@@ -1,0 +1,4 @@
+#!/bin/bash
+
+docker run -it --privileged -v "`pwd`":/opt/src toolchain bash
+

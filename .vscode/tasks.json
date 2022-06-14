@@ -1,0 +1,44 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build & Run Test",
+            "type": "shell",
+            "command": "cd test && make clean ; time make test && ./a.out",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": ["relative", "${workspaceRoot}/test"]
+            }
+        },
+        {
+            "label": "Build & Run Build Benchmark",
+            "type": "shell",
+            "command": "cd test && make clean ; time make test_compile_duration && ./a.out",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": ["relative", "${workspaceRoot}/test"]
+            }
+        },
+        {
+            "label": "Build & Run Build Comparison",
+            "type": "shell",
+            "command": "cd test && make clean ; time make comparison && ./a.out",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": ["relative", "${workspaceRoot}/test"]
+            }
+        }
+    ]
+}
