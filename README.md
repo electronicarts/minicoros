@@ -10,8 +10,7 @@ Why use Minicoros over Continuables? Minicoros is much friendlier to the compile
 
 Unfortunately there's no support for C++20 coroutines yet, but that will be added.
 
-Examples
-========
+## Examples
 ```cpp
 mc::future<int> sum1(int o1, int o2) {
   // Return a future that synchronously/immediately returns a successful value
@@ -57,3 +56,8 @@ void main() {
                          // from the current function, or finalized with `done` 
 }
 ```
+
+## Contributing
+Before you can contribute, EA must have a Contributor License Agreement (CLA) on file that has been signed by each contributor.
+You can sign here: [Go to CLA](https://electronicarts.na1.echosign.com/public/esignWidget?wid=CBFCIBAA3AAABLblqZhByHRvZqmltGtliuExmuV-WNzlaJGPhbSRg2ufuPsM3P0QmILZjLpkGslg24-UJtek*)
+
