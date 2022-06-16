@@ -3,6 +3,10 @@
 #ifndef MINICOROS_CONTINUATION_CHAIN_H_
 #define MINICOROS_CONTINUATION_CHAIN_H_
 
+#ifdef MINICOROS_CUSTOM_INCLUDE
+  #include MINICOROS_CUSTOM_INCLUDE
+#endif
+
 #include <utility>
 #include <functional>
 #include <cassert>

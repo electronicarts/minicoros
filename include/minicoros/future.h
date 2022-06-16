@@ -3,6 +3,10 @@
 #ifndef MINICOROS_FUTURE_H_
 #define MINICOROS_FUTURE_H_
 
+#ifdef MINICOROS_CUSTOM_INCLUDE
+  #include MINICOROS_CUSTOM_INCLUDE
+#endif
+
 #include <minicoros/continuation_chain.h>
 #include <minicoros/types.h>
 #include <minicoros/detail/operation_helpers.h>

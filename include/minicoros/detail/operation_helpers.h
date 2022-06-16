@@ -3,6 +3,10 @@
 #ifndef MINICOROS_DETAIL_OPERATION_HELPERS_H_
 #define MINICOROS_DETAIL_OPERATION_HELPERS_H_
 
+#ifdef MINICOROS_CUSTOM_INCLUDE
+  #include MINICOROS_CUSTOM_INCLUDE
+#endif
+
 #include <minicoros/types.h>
 #include <minicoros/continuation_chain.h>
 

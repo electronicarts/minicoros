@@ -3,6 +3,10 @@
 #ifndef MINICOROS_TYPES_H_
 #define MINICOROS_TYPES_H_
 
+#ifdef MINICOROS_CUSTOM_INCLUDE
+  #include MINICOROS_CUSTOM_INCLUDE
+#endif
+
 #include <utility>
 #include <variant>
 #include <optional>
