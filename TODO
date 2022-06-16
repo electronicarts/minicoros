@@ -5,3 +5,5 @@
 * static assert that verifies that callbacks return mc::result (and other cases)
 * guards against multiple invocation of promise
 * future<T...> instead of future<tuple<T...>> for compositions. Note: not high prio; future<tuple<T...>> should only be used as intermediate steps; not referenced directly
+* tests for both std and eastl
+* don't require default constructors for types used in mc::future

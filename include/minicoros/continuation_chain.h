@@ -7,12 +7,30 @@
   #include MINICOROS_CUSTOM_INCLUDE
 #endif
 
-#include <utility>
-#include <functional>
-#include <cassert>
+#ifdef MINICOROS_USE_EASTL
+  #include <eastl/utility.h>
+  #include <eastl/functional.h>
+  #include <cassert>
 
-#ifndef MINICOROS_FUNCTION_TYPE
-  #define MINICOROS_FUNCTION_TYPE std::function
+  #ifndef MINICOROS_STD
+    #define MINICOROS_STD eastl
+  #endif
+
+  #ifndef MINICOROS_FUNCTION_TYPE
+    #define MINICOROS_FUNCTION_TYPE eastl::function
+  #endif
+#else
+  #include <utility>
+  #include <functional>
+  #include <cassert>
+
+  #ifndef MINICOROS_STD
+    #define MINICOROS_STD std
+  #endif
+
+  #ifndef MINICOROS_FUNCTION_TYPE
+    #define MINICOROS_FUNCTION_TYPE std::function
+  #endif
 #endif
 
 namespace mc {
@@ -50,6 +68,7 @@ public:
   //       We don't really copy any functions containing continuation_chains, so when we have support for
   //       move-only std::function, remove this copy-ctor.
   continuation_chain(const continuation_chain<T>&) {
+    // TODO pbackman: configurable assert
     assert("copying continuation chains isn't supported" && 0);
   }
 
@@ -65,32 +84,32 @@ private:
 };
 
 template<typename T>
-continuation_chain<T>::continuation_chain(continuation<continuation<T>>&& fun) : activator_(std::move(fun)) {}
+continuation_chain<T>::continuation_chain(continuation<continuation<T>>&& fun) : activator_(MINICOROS_STD::move(fun)) {}
 
 template<typename T>
 continuation_chain<T>::continuation_chain(continuation_chain<T>&& other) { activator_.swap(other.activator_); }
 
 template<typename T>
-continuation_chain<T>::~continuation_chain() { std::move(*this).evaluate_into([](T&&){}); }
+continuation_chain<T>::~continuation_chain() { MINICOROS_STD::move(*this).evaluate_into([](T&&){}); }
 
 template<typename T>
 template<typename ResultType, typename TransformType>
 continuation_chain<ResultType> continuation_chain<T>::transform(TransformType&& transformation) && {
   return continuation_chain<ResultType>{
     [
-      transformation = std::forward<TransformType>(transformation),
-      parent_activator = std::move(activator_)
+      transformation = MINICOROS_STD::forward<TransformType>(transformation),
+      parent_activator = MINICOROS_STD::move(activator_)
     ]
     (continuation<ResultType>&& next_continuation) mutable {
       parent_activator(
         [
-          next_continuation = std::move(next_continuation),
-          transformation = std::forward<TransformType>(transformation)
+          next_continuation = MINICOROS_STD::move(next_continuation),
+          transformation = MINICOROS_STD::forward<TransformType>(transformation)
         ]
         (T&& input) mutable {
           // This gets invoked through the continuation; it's the part of the evaluation flow that actually calls the code and binds it with a continuation
           // that evaluates the next functor of the chain.
-          transformation(std::move(input), std::move(next_continuation));
+          transformation(MINICOROS_STD::move(input), MINICOROS_STD::move(next_continuation));
         }
       );
     }
@@ -102,7 +121,7 @@ void continuation_chain<T>::evaluate_into(continuation<T>&& sink) && {
   if (!activator_)
     return;
 
-  activator_(std::move(sink));
+  activator_(MINICOROS_STD::move(sink));
   activator_ = {};
 }
 

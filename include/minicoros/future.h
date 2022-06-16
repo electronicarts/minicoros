@@ -11,9 +11,24 @@
 #include <minicoros/types.h>
 #include <minicoros/detail/operation_helpers.h>
 
-#include <type_traits>
-#include <variant>
-#include <memory>
+#ifdef MINICOROS_USE_EASTL
+  #include <eastl/type_traits.h>
+  #include <eastl/variant.h>
+  #include <eastl/memory.h>
+  #include <eastl/shared_ptr.h>
+
+  #ifndef MINICOROS_STD
+    #define MINICOROS_STD eastl
+  #endif
+#else
+  #include <type_traits>
+  #include <variant>
+  #include <memory>
+
+  #ifndef MINICOROS_STD
+    #define MINICOROS_STD std
+  #endif
+#endif
 
 namespace mc {
 
@@ -23,17 +38,17 @@ class result;
 namespace detail {
 
 template<typename T>
-struct is_result : public std::false_type {};
+struct is_result : public MINICOROS_STD::false_type {};
 
 template<typename T>
-struct is_result<mc::result<T>> : public std::true_type {};
+struct is_result<mc::result<T>> : public MINICOROS_STD::true_type {};
 
 template<typename T>
 constexpr bool is_result_v = is_result<T>::value;
 
 template<typename ReturnedType>
 struct resulting_successful_type {
-  static constexpr bool CallbackHasCorrectReturnType = is_result_v<ReturnedType> || std::is_void_v<ReturnedType>;
+  static constexpr bool CallbackHasCorrectReturnType = is_result_v<ReturnedType> || MINICOROS_STD::is_void_v<ReturnedType>;
   static_assert(CallbackHasCorrectReturnType, "Invalid return type in .then handler. Please explicitly set the return type to `mc::result<...>`.");
 };
 
@@ -50,7 +65,7 @@ struct resulting_successful_type<void> {
 };
 
 template<typename LambdaType>
-auto resulting_type_from_successful_callback(LambdaType&& lambda) -> typename resulting_successful_type<decltype(return_type(std::forward<LambdaType>(lambda)))>::type;
+auto resulting_type_from_successful_callback(LambdaType&& lambda) -> typename resulting_successful_type<decltype(return_type(MINICOROS_STD::forward<LambdaType>(lambda)))>::type;
 
 
 /// Struct used to map the return type of fail handlers to a naked type that can be used in a future.
@@ -60,7 +75,7 @@ auto resulting_type_from_successful_callback(LambdaType&& lambda) -> typename re
 ///   ... -> error
 template<typename ReturnedType, typename FallbackType>
 struct resulting_failure_type {
-  static constexpr bool CallbackHasCorrectReturnType = is_result_v<ReturnedType> || std::is_same_v<ReturnedType, mc::failure>;
+  static constexpr bool CallbackHasCorrectReturnType = is_result_v<ReturnedType> || MINICOROS_STD::is_same_v<ReturnedType, mc::failure>;
   static_assert(CallbackHasCorrectReturnType, "Invalid return type in .fail handler. Please `return mc::failure(...)` to rethrow the error or explicitly set the return type to `mc::result<...>` to recover with a new successful value.");
 };
 
@@ -77,7 +92,7 @@ struct resulting_failure_type<mc::failure, FallbackType> {
 };
 
 template<typename FallbackType, typename CallbackType>
-auto resulting_type_from_failure_callback(CallbackType&& callback) -> typename resulting_failure_type<decltype(callback(std::declval<MINICOROS_ERROR_TYPE>())), FallbackType>::type;
+auto resulting_type_from_failure_callback(CallbackType&& callback) -> typename resulting_failure_type<decltype(callback(MINICOROS_STD::declval<MINICOROS_ERROR_TYPE>())), FallbackType>::type;
 
 } // detail
 
@@ -110,17 +125,17 @@ auto resulting_type_from_failure_callback(CallbackType&& callback) -> typename r
 template<typename T>
 class future {
 public:
-  static_assert(std::is_void_v<T> || std::is_copy_constructible_v<T>, "Type must be copy-constructible"); // TODO: unfortunately we need copy-constructors. Get rid of that (might need move-only std::function)
-  static_assert(std::is_void_v<T> || std::is_move_constructible_v<T>, "Type must be move-constructible");
+  static_assert(MINICOROS_STD::is_void_v<T> || MINICOROS_STD::is_copy_constructible_v<T>, "Type must be copy-constructible"); // TODO: unfortunately we need copy-constructors. Get rid of that (might need move-only std::function)
+  static_assert(MINICOROS_STD::is_void_v<T> || MINICOROS_STD::is_move_constructible_v<T>, "Type must be move-constructible");
 
-  future(continuation<promise<T>>&& callback) : chain_(std::move(callback)) {}
-  future(continuation_chain<concrete_result<T>>&& chain) : chain_(std::move(chain)) {}
+  future(continuation<promise<T>>&& callback) : chain_(MINICOROS_STD::move(callback)) {}
+  future(continuation_chain<concrete_result<T>>&& chain) : chain_(MINICOROS_STD::move(chain)) {}
 
   future(const future&) = delete;
   future& operator =(const future&) = delete;
 
-  future(future&& other) : chain_(std::move(other.chain_)) {}
-  future& operator =(future&& other) {chain_ = std::move(other.chain_); return *this; }
+  future(future&& other) : chain_(MINICOROS_STD::move(other.chain_)) {}
+  future& operator =(future&& other) {chain_ = MINICOROS_STD::move(other.chain_); return *this; }
 
   using type = T;
 
@@ -145,20 +160,20 @@ public:
   /// ```
   template<typename CallbackType>
   [[nodiscard]] auto then(CallbackType&& callback) && {
-    using ReturnType = decltype(detail::resulting_type_from_successful_callback(std::forward<CallbackType>(callback)));
+    using ReturnType = decltype(detail::resulting_type_from_successful_callback(MINICOROS_STD::forward<CallbackType>(callback)));
 
     // Transform the continuation chain...
-    auto new_chain = std::move(chain_).template transform<concrete_result<ReturnType>>([callback = std::forward<CallbackType>(callback)](concrete_result<T>&& result, promise<ReturnType>&& promise) mutable {
+    auto new_chain = MINICOROS_STD::move(chain_).template transform<concrete_result<ReturnType>>([callback = MINICOROS_STD::forward<CallbackType>(callback)](concrete_result<T>&& result, promise<ReturnType>&& promise) mutable {
       if (result.success()) {
-        result.resolve_promise_with_callback(std::forward<CallbackType>(callback), std::move(promise));
+        result.resolve_promise_with_callback(MINICOROS_STD::forward<CallbackType>(callback), MINICOROS_STD::move(promise));
       }
       else {
-        promise(std::move(*result.get_failure()));
+        promise(MINICOROS_STD::move(*result.get_failure()));
       }
     });
 
     // ... and return it wrapped in a future
-    return future<ReturnType>{std::move(new_chain)};
+    return future<ReturnType>{MINICOROS_STD::move(new_chain)};
   }
 
   /// "Embraids" the given future with this future. Will evaluate the given future
@@ -167,17 +182,17 @@ public:
   [[nodiscard]] auto then(future<ReturnType>&& coro) && {
     // We only need the continuation_chain inside the lambda, so peel off the future. This makes it possible
     // for future to be a move-only type -- continuation_chain has a stub copy ctor to work with std::function.
-    auto new_chain = std::move(chain_).template transform<concrete_result<ReturnType>>([coro_chain = std::move(coro).chain()](concrete_result<T>&& result, promise<ReturnType>&& promise) mutable {
+    auto new_chain = MINICOROS_STD::move(chain_).template transform<concrete_result<ReturnType>>([coro_chain = MINICOROS_STD::move(coro).chain()](concrete_result<T>&& result, promise<ReturnType>&& promise) mutable {
       if (result.success()) {
-        std::move(coro_chain).evaluate_into(std::move(promise));
+        MINICOROS_STD::move(coro_chain).evaluate_into(MINICOROS_STD::move(promise));
       }
       else {
-        std::move(coro_chain).cancel(); // Cancel chain so it's not evaluated on destruction
-        promise(std::move(*result.get_failure())); // Forward just the failure, not the successful return type
+        MINICOROS_STD::move(coro_chain).cancel(); // Cancel chain so it's not evaluated on destruction
+        promise(MINICOROS_STD::move(*result.get_failure())); // Forward just the failure, not the successful return type
       }
     });
 
-    return future<ReturnType>{std::move(new_chain)};
+    return future<ReturnType>{MINICOROS_STD::move(new_chain)};
   }
 
   /// Creates a new future by transforming this future through the given callback.
@@ -204,48 +219,48 @@ public:
   /// ```
   template<typename CallbackType>
   [[nodiscard]] auto fail(CallbackType&& callback) && {
-    using ReturnType = decltype(detail::resulting_type_from_failure_callback<T>(std::forward<CallbackType>(callback)));
+    using ReturnType = decltype(detail::resulting_type_from_failure_callback<T>(MINICOROS_STD::forward<CallbackType>(callback)));
 
     // Transform the continuation chain...
-    auto new_chain = std::move(chain_).template transform<concrete_result<ReturnType>>([callback = std::forward<CallbackType>(callback)] (concrete_result<T>&& result, promise<ReturnType>&& promise) mutable {
+    auto new_chain = MINICOROS_STD::move(chain_).template transform<concrete_result<ReturnType>>([callback = MINICOROS_STD::forward<CallbackType>(callback)] (concrete_result<T>&& result, promise<ReturnType>&& promise) mutable {
       if (result.success()) {
-        promise(std::move(result));
+        promise(MINICOROS_STD::move(result));
       }
       else {
         // We received a failure, so invoke the callback
-        mc::result<ReturnType> res{callback(std::move(result.get_failure()->error))};
-        res.resolve_promise(std::move(promise));
+        mc::result<ReturnType> res{callback(MINICOROS_STD::move(result.get_failure()->error))};
+        res.resolve_promise(MINICOROS_STD::move(promise));
       }
     });
 
     // ... and return it wrapped in a future
-    return future<ReturnType>{std::move(new_chain)};
+    return future<ReturnType>{MINICOROS_STD::move(new_chain)};
   }
 
   /// Called regardless of success or failure. A `concrete_result<T>` will be passed to
   /// the callback, and the callback is expected to return a `concrete_result<A>`.
   template<typename CallbackType>
   [[nodiscard]] auto map(CallbackType&& callback) && {
-    using ReturnType = decltype(callback(std::declval<concrete_result<T>>()));
+    using ReturnType = decltype(callback(MINICOROS_STD::declval<concrete_result<T>>()));
     static_assert(is_concrete_result_v<ReturnType>, "Callback must return concrete_result<...>");
 
     using WrappedType = typename ReturnType::type;
 
-    auto new_chain = std::move(chain_).template transform<ReturnType>([callback = std::forward<CallbackType>(callback)] (concrete_result<T>&& result, promise<WrappedType>&& promise) mutable {
-      promise(callback(std::move(result)));
+    auto new_chain = MINICOROS_STD::move(chain_).template transform<ReturnType>([callback = MINICOROS_STD::forward<CallbackType>(callback)] (concrete_result<T>&& result, promise<WrappedType>&& promise) mutable {
+      promise(callback(MINICOROS_STD::move(result)));
     });
 
-    return future<WrappedType>{std::move(new_chain)};
+    return future<WrappedType>{MINICOROS_STD::move(new_chain)};
   }
 
   template<typename CallbackType>
   [[nodiscard]] auto finally(CallbackType&& callback) && {
-    return std::move(*this).map(std::forward<CallbackType>(callback));
+    return MINICOROS_STD::move(*this).map(MINICOROS_STD::forward<CallbackType>(callback));
   }
 
   template<typename CallbackType>
   void done(CallbackType&& callback) && {
-    std::move(chain_).evaluate_into(std::forward<CallbackType>(callback));
+    MINICOROS_STD::move(chain_).evaluate_into(MINICOROS_STD::forward<CallbackType>(callback));
   }
 
   /// Transforms this future by executing the downstream callbacks through the given "executor".
@@ -255,9 +270,9 @@ public:
   template<typename ExecutorType>
   [[nodiscard]] future<T> enqueue(ExecutorType&& executor) && {
     // Take the executor by copy
-    return std::move(chain_).template transform<concrete_result<T>>([executor](concrete_result<T>&& value, promise<T>&& promise) mutable {
-      executor([value = std::move(value), promise = std::move(promise)] () mutable {
-        std::move(promise)(std::move(value));
+    return MINICOROS_STD::move(chain_).template transform<concrete_result<T>>([executor](concrete_result<T>&& value, promise<T>&& promise) mutable {
+      executor([value = MINICOROS_STD::move(value), promise = MINICOROS_STD::move(promise)] () mutable {
+        MINICOROS_STD::move(promise)(MINICOROS_STD::move(value));
       });
     });
   }
@@ -266,15 +281,15 @@ public:
   [[nodiscard]] auto operator &&(future<RhsResultType>&& rhs) && {
     using ResultingTupleType = typename detail::tuple_result<T, RhsResultType>::value_type;
 
-    return future<ResultingTupleType>([lhs_chain = std::move(*this).chain(), rhs_chain = std::move(rhs).chain()](promise<ResultingTupleType>&& p) mutable {
-      auto result_builder = std::make_shared<detail::tuple_result<T, RhsResultType>>(std::move(p));
+    return future<ResultingTupleType>([lhs_chain = MINICOROS_STD::move(*this).chain(), rhs_chain = MINICOROS_STD::move(rhs).chain()](promise<ResultingTupleType>&& p) mutable {
+      auto result_builder = MINICOROS_STD::make_shared<detail::tuple_result<T, RhsResultType>>(MINICOROS_STD::move(p));
 
-      std::move(lhs_chain).evaluate_into([result_builder] (concrete_result<T>&& result) {
-        result_builder->assign_lhs(std::move(result));
+      MINICOROS_STD::move(lhs_chain).evaluate_into([result_builder] (concrete_result<T>&& result) {
+        result_builder->assign_lhs(MINICOROS_STD::move(result));
       });
 
-      std::move(rhs_chain).evaluate_into([result_builder] (concrete_result<RhsResultType>&& result) {
-        result_builder->assign_rhs(std::move(result));
+      MINICOROS_STD::move(rhs_chain).evaluate_into([result_builder] (concrete_result<RhsResultType>&& result) {
+        result_builder->assign_rhs(MINICOROS_STD::move(result));
       });
     });
   }
@@ -284,15 +299,15 @@ public:
   [[nodiscard]] future<T> operator ||(future<T>&& rhs) && {
     // Unwrap the chains from their future overcoats. Futures aren't copy-constructible, but the chains are. Remove
     // this when we have move-only std::function.
-    return future<T>([lhs_chain = std::move(*this).chain(), rhs_chain = std::move(rhs).chain()](promise<T>&& p) mutable {
-      auto result_builder = std::make_shared<detail::any_result<T>>(std::move(p));
+    return future<T>([lhs_chain = MINICOROS_STD::move(*this).chain(), rhs_chain = MINICOROS_STD::move(rhs).chain()](promise<T>&& p) mutable {
+      auto result_builder = MINICOROS_STD::make_shared<detail::any_result<T>>(MINICOROS_STD::move(p));
 
-      std::move(lhs_chain).evaluate_into([result_builder] (concrete_result<T>&& result) {
-        result_builder->assign(std::move(result));
+      MINICOROS_STD::move(lhs_chain).evaluate_into([result_builder] (concrete_result<T>&& result) {
+        result_builder->assign(MINICOROS_STD::move(result));
       });
 
-      std::move(rhs_chain).evaluate_into([result_builder] (concrete_result<T>&& result) {
-        result_builder->assign(std::move(result));
+      MINICOROS_STD::move(rhs_chain).evaluate_into([result_builder] (concrete_result<T>&& result) {
+        result_builder->assign(MINICOROS_STD::move(result));
       });
     });
   }
@@ -303,21 +318,21 @@ public:
   [[nodiscard]] auto operator >>(future<RhsResultType>&& rhs) && {
     using ResultingTupleType = typename detail::tuple_result<T, RhsResultType>::value_type;
 
-    return future<ResultingTupleType>([lhs_chain = std::move(*this).chain(), rhs_chain = std::move(rhs).chain()](promise<ResultingTupleType>&& p) mutable {
-      auto result_builder = std::make_shared<detail::tuple_result<T, RhsResultType>>(std::move(p));
+    return future<ResultingTupleType>([lhs_chain = MINICOROS_STD::move(*this).chain(), rhs_chain = MINICOROS_STD::move(rhs).chain()](promise<ResultingTupleType>&& p) mutable {
+      auto result_builder = MINICOROS_STD::make_shared<detail::tuple_result<T, RhsResultType>>(MINICOROS_STD::move(p));
 
-      std::move(lhs_chain).evaluate_into([result_builder, rhs_chain = std::move(rhs_chain)] (concrete_result<T>&& result) mutable {
-        result_builder->assign_lhs(std::move(result));
+      MINICOROS_STD::move(lhs_chain).evaluate_into([result_builder, rhs_chain = MINICOROS_STD::move(rhs_chain)] (concrete_result<T>&& result) mutable {
+        result_builder->assign_lhs(MINICOROS_STD::move(result));
 
-        std::move(rhs_chain).evaluate_into([result_builder] (concrete_result<RhsResultType>&& result) {
-          result_builder->assign_rhs(std::move(result));
+        MINICOROS_STD::move(rhs_chain).evaluate_into([result_builder] (concrete_result<RhsResultType>&& result) {
+          result_builder->assign_rhs(MINICOROS_STD::move(result));
         });
       });
     });
   }
 
   continuation_chain<concrete_result<T>>&& chain() && {
-    return std::move(chain_);
+    return MINICOROS_STD::move(chain_);
   }
 
 private:
@@ -326,7 +341,7 @@ private:
 
 template<typename T>
 future<T> make_successful_future(T&& value) {
-  return future<T>([value = std::forward<T>(value)](promise<T>&& p) mutable {p(std::forward<T>(value)); });
+  return future<T>([value = MINICOROS_STD::forward<T>(value)](promise<T>&& p) mutable {p(MINICOROS_STD::forward<T>(value)); });
 }
 
 template<typename T>
@@ -336,7 +351,7 @@ future<T> make_successful_future(const T& value) {
 
 template<typename T>
 future<T> make_successful_future(mc::future<T>&& value) {
-  return std::move(value);
+  return MINICOROS_STD::move(value);
 }
 
 template<typename T>
@@ -346,7 +361,7 @@ future<void> make_successful_future() {
 
 template<typename T>
 future<T> make_failed_future(MINICOROS_ERROR_TYPE&& error) {
-  return future<T>([error = std::move(error)](promise<T>&& p) mutable {p(failure{std::move(error)}); });
+  return future<T>([error = MINICOROS_STD::move(error)](promise<T>&& p) mutable {p(failure{MINICOROS_STD::move(error)}); });
 }
 
 /// Deals with the various types a callback can return:
@@ -365,31 +380,31 @@ future<T> make_failed_future(MINICOROS_ERROR_TYPE&& error) {
 /// ```
 template<typename T>
 class result {
-  using StoredType = std::decay_t<T>;
+  using StoredType = MINICOROS_STD::decay_t<T>;
 
 public:
   using type = T;
 
-  result(future<T>&& coro) : value_(std::move(coro)) {}
+  result(future<T>&& coro) : value_(MINICOROS_STD::move(coro)) {}
 
   template<typename OtherType>
-  result(OtherType&& value) : value_(StoredType{std::move(value)}) {}
+  result(OtherType&& value) : value_(StoredType{MINICOROS_STD::move(value)}) {}
 
-  result(failure&& f) : value_(std::move(f)) {}
+  result(failure&& f) : value_(MINICOROS_STD::move(f)) {}
 
   void resolve_promise(promise<T>&& promise) {
-    if (StoredType* value = std::get_if<StoredType>(&value_))
-      std::move(promise)(std::move(*value));
-    else if (future<T>* coro = std::get_if<future<T>>(&value_))
-      std::move(*coro).chain().evaluate_into(std::move(promise));
-    else if (failure* f = std::get_if<failure>(&value_))
-      std::move(promise)(std::move(*f));
+    if (StoredType* value = MINICOROS_STD::get_if<StoredType>(&value_))
+      MINICOROS_STD::move(promise)(MINICOROS_STD::move(*value));
+    else if (future<T>* coro = MINICOROS_STD::get_if<future<T>>(&value_))
+      MINICOROS_STD::move(*coro).chain().evaluate_into(MINICOROS_STD::move(promise));
+    else if (failure* f = MINICOROS_STD::get_if<failure>(&value_))
+      MINICOROS_STD::move(promise)(MINICOROS_STD::move(*f));
     else
       assert("invalid result state" && 0);
   }
 
 private:
-  std::variant<StoredType, future<T>, failure> value_;
+  MINICOROS_STD::variant<StoredType, future<T>, failure> value_;
 };
 
 /// Specalization for callbacks that return `result<void>`.
@@ -401,22 +416,22 @@ public:
   using type = void;
 
   result() : value_(success_t{}) {}
-  result(future<void>&& coro) : value_(std::move(coro)) {}
-  result(failure&& f) : value_(std::move(f)) {}
+  result(future<void>&& coro) : value_(MINICOROS_STD::move(coro)) {}
+  result(failure&& f) : value_(MINICOROS_STD::move(f)) {}
 
   void resolve_promise(promise<void>&& promise) {
-    if (std::get_if<success_t>(&value_))
-      std::move(promise)({});
-    else if (future<void>* coro = std::get_if<future<void>>(&value_))
-      std::move(*coro).chain().evaluate_into(std::move(promise));
-    else if (failure* f = std::get_if<failure>(&value_))
-      std::move(promise)(std::move(*f));
+    if (MINICOROS_STD::get_if<success_t>(&value_))
+      MINICOROS_STD::move(promise)({});
+    else if (future<void>* coro = MINICOROS_STD::get_if<future<void>>(&value_))
+      MINICOROS_STD::move(*coro).chain().evaluate_into(MINICOROS_STD::move(promise));
+    else if (failure* f = MINICOROS_STD::get_if<failure>(&value_))
+      MINICOROS_STD::move(promise)(MINICOROS_STD::move(*f));
     else
       assert("invalid result state" && 0);
   }
 
 private:
-  std::variant<success_t, future<void>, failure> value_;
+  MINICOROS_STD::variant<success_t, future<void>, failure> value_;
 };
 
 } // mc
