@@ -373,7 +373,7 @@ private:
 
   vector_result<T> storage_;
   MINICOROS_STD::vector<ChainType> chains_;
-  MINICOROS_STD::size_t next_chain_idx_ = 0u;
+  size_t next_chain_idx_ = 0u;
 };
 
 } // mc::detail
