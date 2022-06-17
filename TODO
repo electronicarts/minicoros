@@ -1,3 +1,5 @@
+* tests for both std and eastl
+* remove the return_type solution in types.h
 * support for auto parameter type deduction for .then handlers
 * benchmark vs continuables (both synthetic tests and real-world)
 * measure how much partial application would cost (+ unpacking tuples)
@@ -5,5 +7,3 @@
 * static assert that verifies that callbacks return mc::result (and other cases)
 * guards against multiple invocation of promise
 * future<T...> instead of future<tuple<T...>> for compositions. Note: not high prio; future<tuple<T...>> should only be used as intermediate steps; not referenced directly
-* tests for both std and eastl
-* don't require default constructors for types used in mc::future

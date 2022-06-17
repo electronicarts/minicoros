@@ -37,30 +37,40 @@
 
 namespace mc {
 namespace detail {
-// TODO: a less silly way of getting the return type of a lambda; merge with the lambda_helper
+
+class untyped_declval
+{
+public:
+  template<typename T>
+  operator T() const {
+    return std::declval<T>();
+  }
+};
+
+// TODO: we shouldn't try to pry a return type from the lambda. We should instead invert the flow.
 template<typename LambdaType>
-auto return_type(LambdaType&& lambda) -> decltype(lambda({}, {}, {}, {}, {}, {}, {}, {}));
+auto return_type(LambdaType&& lambda) -> decltype(lambda(untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}));
 
 template<typename LambdaType>
-auto return_type(LambdaType&& lambda) -> decltype(lambda({}, {}, {}, {}, {}, {}, {}));
+auto return_type(LambdaType&& lambda) -> decltype(lambda(untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}));
 
 template<typename LambdaType>
-auto return_type(LambdaType&& lambda) -> decltype(lambda({}, {}, {}, {}, {}, {}));
+auto return_type(LambdaType&& lambda) -> decltype(lambda(untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}));
 
 template<typename LambdaType>
-auto return_type(LambdaType&& lambda) -> decltype(lambda({}, {}, {}, {}, {}));
+auto return_type(LambdaType&& lambda) -> decltype(lambda(untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}));
 
 template<typename LambdaType>
-auto return_type(LambdaType&& lambda) -> decltype(lambda({}, {}, {}, {}));
+auto return_type(LambdaType&& lambda) -> decltype(lambda(untyped_declval{}, untyped_declval{}, untyped_declval{}, untyped_declval{}));
 
 template<typename LambdaType>
-auto return_type(LambdaType&& lambda) -> decltype(lambda({}, {}, {}));
+auto return_type(LambdaType&& lambda) -> decltype(lambda(untyped_declval{}, untyped_declval{}, untyped_declval{}));
 
 template<typename LambdaType>
-auto return_type(LambdaType&& lambda) -> decltype(lambda({}, {}));
+auto return_type(LambdaType&& lambda) -> decltype(lambda(untyped_declval{}, untyped_declval{}));
 
 template<typename LambdaType>
-auto return_type(LambdaType&& lambda) -> decltype(lambda({}));
+auto return_type(LambdaType&& lambda) -> decltype(lambda(untyped_declval{}));
 
 template<typename LambdaType>
 auto return_type(LambdaType&& lambda) -> decltype(lambda());

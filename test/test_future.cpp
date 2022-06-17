@@ -639,7 +639,7 @@ TEST(future, partial_application_can_take_subsets) {
       ASSERT_EQ(v1, 123);
     })
     .done([] (auto) {});
-  
+
   (mc::make_successful_future<int>(123) && mc::make_successful_future<bool>(true) && mc::make_successful_future<void>())
     .then([call_count](int v1) mutable {
       ++*call_count;
@@ -761,4 +761,19 @@ TEST(future, finally) {
   }
 
   ASSERT_EQ(*call_count, 2);
+}
+
+TEST(future, accepts_type_without_default_constructor) {
+  class type_without_default_ctor {
+  public:
+    type_without_default_ctor() = delete;
+    type_without_default_ctor(const type_without_default_ctor&) = default;
+    type_without_default_ctor(int) {}
+  };
+
+  mc::make_successful_future<type_without_default_ctor>(1234)
+    .then([] (type_without_default_ctor) {
+
+    })
+    .done([] (mc::concrete_result<void>) {});
 }
