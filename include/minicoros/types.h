@@ -43,7 +43,7 @@ class untyped_declval
 public:
   template<typename T>
   operator T() const {
-    return std::declval<T>();
+    return MINICOROS_STD::declval<T>();
   }
 };
 
