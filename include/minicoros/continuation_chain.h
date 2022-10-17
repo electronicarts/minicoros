@@ -75,7 +75,6 @@ public:
   continuation_chain<ResultType> transform(TransformType&& transformation) &&;
 
   void evaluate_into(continuation<T>&& sink) &&;
-  void cancel() &&;
 
 private:
   continuation<continuation<T>> activator_;
@@ -113,15 +112,8 @@ continuation_chain<ResultType> continuation_chain<T>::transform(TransformType&& 
 
 template<typename T>
 void continuation_chain<T>::evaluate_into(continuation<T>&& sink) && {
-  if (!activator_)
-    return;
-
+  assert(activator_ && "evaluating a chain without an activator");
   activator_(MINICOROS_STD::move(sink));
-  activator_ = {};
-}
-
-template<typename T>
-void continuation_chain<T>::cancel() && {
   activator_ = {};
 }
 

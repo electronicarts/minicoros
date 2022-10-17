@@ -187,7 +187,6 @@ public:
         MINICOROS_STD::move(coro_chain).evaluate_into(MINICOROS_STD::move(promise));
       }
       else {
-        MINICOROS_STD::move(coro_chain).cancel(); // Cancel chain so it's not evaluated on destruction
         promise(MINICOROS_STD::move(*result.get_failure())); // Forward just the failure, not the successful return type
       }
     });
