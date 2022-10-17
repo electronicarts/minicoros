@@ -248,16 +248,16 @@ TEST(future, futures_can_return_void) {
   using namespace mc;
   auto num_invocations = std::make_shared<int>();
 
-  {
-    future<void> c = make_successful_future<void>()
-      .then([num_invocations] {
-        ++*num_invocations;
-      })
-      .then([num_invocations]() -> mc::result<void> {
-        ++*num_invocations;
-        return make_successful_future<void>();
-      });
-  }
+  future<void> c = make_successful_future<void>()
+    .then([num_invocations] {
+      ++*num_invocations;
+    })
+    .then([num_invocations]() -> mc::result<void> {
+      ++*num_invocations;
+      return make_successful_future<void>();
+    });
+
+  std::move(c).done([](auto){});
 
   ASSERT_EQ(*num_invocations, 2);
 }
@@ -266,26 +266,26 @@ TEST(future, futures_returning_void_can_be_transformed_to_and_from) {
   using namespace mc;
   auto num_invocations = std::make_shared<int>();
 
-  {
-    future<void> c = make_successful_future<void>()
-      .then([num_invocations]() -> result<int> {
-        ++*num_invocations;
-        return 123;
-      })
-      .then([num_invocations](int value) -> result<void> {
-        ASSERT_EQ(value, 123);
-        ++*num_invocations;
-        return {};
-      })
-      .then([num_invocations]() -> result<int> {
-        ++*num_invocations;
-        return 124;
-      })
-      .then([num_invocations](int value) {
-        ASSERT_EQ(value, 124);
-        ++*num_invocations;
-      });
-  }
+  future<void> c = make_successful_future<void>()
+    .then([num_invocations]() -> result<int> {
+      ++*num_invocations;
+      return 123;
+    })
+    .then([num_invocations](int value) -> result<void> {
+      ASSERT_EQ(value, 123);
+      ++*num_invocations;
+      return {};
+    })
+    .then([num_invocations]() -> result<int> {
+      ++*num_invocations;
+      return 124;
+    })
+    .then([num_invocations](int value) {
+      ASSERT_EQ(value, 124);
+      ++*num_invocations;
+    });
+
+  std::move(c).done([](auto){});
 
   ASSERT_EQ(*num_invocations, 4);
 }
@@ -348,19 +348,6 @@ TEST(future, two_allocations_per_evaluated_then) {
   ASSERT_EQ(allocs.total_allocation_count(), 6);
 }
 
-TEST(future, one_allocation_per_unevaluated_then) {
-  using namespace mc;
-  alloc_counter allocs;
-
-  {
-    auto c = make_successful_future<int>(8086)
-      .then([] (int) -> mc::result<int> {return 123;})
-      .then([] (int) {})
-      .then([] {});
-    ASSERT_EQ(allocs.total_allocation_count(), 3);
-  }
-}
-
 TEST(future, two_allocations_per_evaluated_fail) {
   using namespace mc;
   alloc_counter allocs;
@@ -373,18 +360,6 @@ TEST(future, two_allocations_per_evaluated_fail) {
   }
 
   ASSERT_EQ(allocs.total_allocation_count(), 4);
-}
-
-TEST(future, one_allocation_per_unevaluated_fail) {
-  using namespace mc;
-  alloc_counter allocs;
-
-  {
-    auto c = make_failed_future<int>(8086)
-      .fail([] (int) {return failure(123);})
-      .fail([] (int) {return failure(444);});
-    ASSERT_EQ(allocs.total_allocation_count(), 2);
-  }
 }
 
 TEST(future, andand_with_two_successful_futures_returns_tuple_successfully) {
@@ -744,21 +719,21 @@ TEST(future, make_successful_future_takes_move) {
 TEST(future, finally) {
   auto call_count = std::make_shared<int>();
 
-  {
-    mc::future<std::string> c = mc::make_successful_future<std::string>("hello")
-      .finally([call_count] (mc::concrete_result<std::string> res) {
-        ASSERT_TRUE(res.success());
-        ASSERT_EQ(*res.get_value(), "hello");
-        ++*call_count;
-        return res;
-      })
-      .finally([call_count] (auto res) {
-        ASSERT_TRUE(res.success());
-        ASSERT_EQ(*res.get_value(), "hello");
-        ++*call_count;
-        return res;
-      });
-  }
+  mc::future<std::string> c = mc::make_successful_future<std::string>("hello")
+    .finally([call_count] (mc::concrete_result<std::string> res) {
+      ASSERT_TRUE(res.success());
+      ASSERT_EQ(*res.get_value(), "hello");
+      ++*call_count;
+      return res;
+    })
+    .finally([call_count] (auto res) {
+      ASSERT_TRUE(res.success());
+      ASSERT_EQ(*res.get_value(), "hello");
+      ++*call_count;
+      return res;
+    });
+
+  std::move(c).done([](auto){});
 
   ASSERT_EQ(*call_count, 2);
 }
@@ -776,4 +751,33 @@ TEST(future, accepts_type_without_default_constructor) {
 
     })
     .done([] (mc::concrete_result<void>) {});
+}
+
+TEST(future, captured_promise_does_not_evaluate_rest_of_chain) {
+  // The continuation_chain destructor used to call `evaluate_into` which would evaluate the chain on
+  // destruction. That's unexpected and we don't want that.
+
+  auto called = std::make_shared<bool>(false);
+  std::unique_ptr<mc::promise<void>> captured_promise;
+
+  {
+    // A lazy future that saves its promise into `captured_promise` (which is outside current scope)
+    auto fut = mc::future<void>([&captured_promise] (auto promise) {
+      captured_promise = std::make_unique<mc::promise<void>>(std::move(promise));
+    });
+
+    std::move(fut)
+      .then(mc::future<void>([called](auto) {
+        *called = true;
+      }))
+      .done([] (auto) {}); // Evaluate the chain so that the promise is put in `captured_promise`
+
+    ASSERT_FALSE(*called);
+  }
+
+  ASSERT_FALSE(*called);
+
+  captured_promise = nullptr;
+
+  ASSERT_FALSE(*called);
 }

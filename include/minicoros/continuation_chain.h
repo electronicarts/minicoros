@@ -57,12 +57,10 @@ using functor = MINICOROS_FUNCTION_TYPE<void(InputType&&, continuation<OutputTyp
 /// });
 /// ```
 template<typename T>
-class continuation_chain
-{
+class continuation_chain {
 public:
   continuation_chain(continuation<continuation<T>>&& fun);
   continuation_chain(continuation_chain<T>&& other);
-  ~continuation_chain();
 
   // NOTE: this copy-ctor is needed because std::function requires the lambda to be copy-constructible.
   //       We don't really copy any functions containing continuation_chains, so when we have support for
@@ -88,9 +86,6 @@ continuation_chain<T>::continuation_chain(continuation<continuation<T>>&& fun) :
 
 template<typename T>
 continuation_chain<T>::continuation_chain(continuation_chain<T>&& other) { activator_.swap(other.activator_); }
-
-template<typename T>
-continuation_chain<T>::~continuation_chain() { MINICOROS_STD::move(*this).evaluate_into([](T&&){}); }
 
 template<typename T>
 template<typename ResultType, typename TransformType>

@@ -137,7 +137,7 @@ TEST(operations_when_seq, vector_of_successful_futures_returns_successfully) {
 TEST(operations_when_seq, futures_are_evaluated_in_order) {
   std::vector<future<int>> v;
   promise<int> p1, p2;
-  bool called;
+  bool called = false;
 
   v.push_back(future<int>([&](promise<int> p) {p1 = std::move(p); }));
   v.push_back(future<int>([&](promise<int> p) {p2 = std::move(p); }));
