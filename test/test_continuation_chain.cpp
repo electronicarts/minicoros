@@ -110,3 +110,22 @@ TEST(continuation_chain, evaluation_can_be_disrupted) {
   saved_promise("hello");
   ASSERT_EQ(*count, 3);
 }
+
+TEST(continuation_chain, evaluated) {
+  mc::continuation_chain<int> chain1([] (mc::continuation<int> promise) {promise(2); });
+  ASSERT_FALSE(chain1.evaluated());
+
+  mc::continuation_chain<int> chain2 = std::move(chain1).transform<int>([] (int, mc::continuation<int> promise) {
+    promise(123);
+  });
+
+  ASSERT_TRUE(chain1.evaluated());
+  ASSERT_FALSE(chain2.evaluated());
+
+  mc::continuation_chain<int> chain3(std::move(chain2));
+  ASSERT_FALSE(chain3.evaluated());
+  ASSERT_TRUE(chain2.evaluated());
+
+  std::move(chain3).evaluate_into([] (auto) {});
+  ASSERT_TRUE(chain3.evaluated());
+}
