@@ -137,6 +137,11 @@ public:
   future(future&& other) : chain_(MINICOROS_STD::move(other.chain_)) {}
   future& operator =(future&& other) {chain_ = MINICOROS_STD::move(other.chain_); return *this; }
 
+  ~future() {
+    if (!chain_.evaluated())
+      MINICOROS_STD::move(*this).done([] (auto) {});
+  }
+
   using type = T;
 
   /// Creates a new future by transforming this future through the given callback.
@@ -187,7 +192,6 @@ public:
         MINICOROS_STD::move(coro_chain).evaluate_into(MINICOROS_STD::move(promise));
       }
       else {
-        MINICOROS_STD::move(coro_chain).cancel(); // Cancel chain so it's not evaluated on destruction
         promise(MINICOROS_STD::move(*result.get_failure())); // Forward just the failure, not the successful return type
       }
     });

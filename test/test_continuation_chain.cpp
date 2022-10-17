@@ -39,7 +39,7 @@ TEST(continuation_chain, chain_of_1_element_evalutes_into_sink_when_promise_is_s
   ASSERT_EQ(*result, 4433);
 }
 
-TEST(continuation_chain, gets_evaluated_when_destructed) {
+TEST(continuation_chain, not_evaluated_when_destructed) {
   auto count = std::make_shared<int>(0);
 
   {
@@ -61,7 +61,7 @@ TEST(continuation_chain, gets_evaluated_when_destructed) {
     ASSERT_EQ(*count, 0);
   }
 
-  ASSERT_EQ(*count, 3);
+  ASSERT_EQ(*count, 0);
 }
 
 TEST(continuation_chain, can_be_moved_into_scope) {
@@ -72,11 +72,13 @@ TEST(continuation_chain, can_be_moved_into_scope) {
     });
 
   {
-    std::move(c).transform<std::string>([count](int value, mc::continuation<std::string> promise) {
-      ASSERT_EQ(value, 12345);
-      ++*count;
-      promise("hello");
-    });
+    std::move(c)
+      .transform<std::string>([count](int value, mc::continuation<std::string> promise) {
+        ASSERT_EQ(value, 12345);
+        ++*count;
+        promise("hello");
+      })
+      .evaluate_into([](auto){});
 
     ASSERT_EQ(*count, 2);
   }
@@ -99,7 +101,8 @@ TEST(continuation_chain, evaluation_can_be_disrupted) {
     ASSERT_EQ(value, "hello");
     ++*count;
     promise("moof");
-  });
+  })
+  .evaluate_into([](auto){});
 
   // Chain is stuck since the promise we saved hasn't been triggered
   ASSERT_EQ(*count, 2);
