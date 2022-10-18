@@ -777,3 +777,52 @@ TEST(future, accepts_type_without_default_constructor) {
     })
     .done([] (mc::concrete_result<void>) {});
 }
+
+TEST(future, captured_promise_does_not_evaluate_rest_of_chain) {
+  // The continuation_chain destructor used to call `evaluate_into` which would evaluate the chain on
+  // destruction. That's unexpected and we don't want that.
+
+  auto called = std::make_shared<bool>(false);
+  std::unique_ptr<mc::promise<void>> captured_promise;
+
+  {
+    // A lazy future that saves its promise into `captured_promise` (which is outside current scope)
+    auto fut = mc::future<void>([&captured_promise] (auto promise) {
+      captured_promise = std::make_unique<mc::promise<void>>(std::move(promise));
+    });
+
+    std::move(fut)
+      .then(mc::future<void>([called](auto) {
+        *called = true;
+      }))
+      .done([] (auto) {}); // Evaluate the chain so that the promise is put in `captured_promise`
+
+    ASSERT_FALSE(*called);
+  }
+
+  ASSERT_FALSE(*called);
+
+  captured_promise = nullptr;
+
+  ASSERT_FALSE(*called);
+}
+
+mc::future<int> foo1() {
+  return mc::make_successful_future<int>(1)
+    .then([] (int val) -> mc::result<int> {return val + 1; });
+}
+
+mc::future<int> foo2() {
+  return foo1()
+    .then([] (int val) -> mc::result<int> {return val + 1; });
+}
+
+TEST(future, functions_compose) {
+  int result = 0;
+
+  foo2()
+    .then([&] (int val) {result = val; })
+    .done([] (auto) {});
+
+  ASSERT_EQ(result, 3);
+}

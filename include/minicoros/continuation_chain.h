@@ -62,7 +62,6 @@ class continuation_chain
 public:
   continuation_chain(continuation<continuation<T>>&& fun);
   continuation_chain(continuation_chain<T>&& other);
-  ~continuation_chain();
 
   // NOTE: this copy-ctor is needed because std::function requires the lambda to be copy-constructible.
   //       We don't really copy any functions containing continuation_chains, so when we have support for
@@ -77,7 +76,10 @@ public:
   continuation_chain<ResultType> transform(TransformType&& transformation) &&;
 
   void evaluate_into(continuation<T>&& sink) &&;
-  void cancel() &&;
+
+  bool evaluated() const {
+    return !activator_;
+  }
 
 private:
   continuation<continuation<T>> activator_;
@@ -88,9 +90,6 @@ continuation_chain<T>::continuation_chain(continuation<continuation<T>>&& fun) :
 
 template<typename T>
 continuation_chain<T>::continuation_chain(continuation_chain<T>&& other) { activator_.swap(other.activator_); }
-
-template<typename T>
-continuation_chain<T>::~continuation_chain() { MINICOROS_STD::move(*this).evaluate_into([](T&&){}); }
 
 template<typename T>
 template<typename ResultType, typename TransformType>
@@ -118,15 +117,8 @@ continuation_chain<ResultType> continuation_chain<T>::transform(TransformType&& 
 
 template<typename T>
 void continuation_chain<T>::evaluate_into(continuation<T>&& sink) && {
-  if (!activator_)
-    return;
-
+  assert(activator_ && "trying to evaluate using a non-set activator");
   activator_(MINICOROS_STD::move(sink));
-  activator_ = {};
-}
-
-template<typename T>
-void continuation_chain<T>::cancel() && {
   activator_ = {};
 }
 
