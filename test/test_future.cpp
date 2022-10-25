@@ -807,6 +807,20 @@ TEST(future, captured_promise_does_not_evaluate_rest_of_chain) {
   ASSERT_FALSE(*called);
 }
 
+TEST(future, freeze_makes_future_not_evaluate) {
+  bool called = false;
+
+  {
+    mc::future<void> fut([&called] (auto) {
+      called = true;
+    });
+
+    fut.freeze();
+  }
+
+  ASSERT_FALSE(called);
+}
+
 mc::future<int> foo1() {
   return mc::make_successful_future<int>(1)
     .then([] (int val) -> mc::result<int> {return val + 1; });
