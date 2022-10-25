@@ -339,6 +339,11 @@ public:
     return MINICOROS_STD::move(chain_);
   }
 
+  /// Stops the chain from getting evaluated on future destruction.
+  void freeze() {
+    chain_.reset();
+  }
+
 private:
   continuation_chain<concrete_result<T>> chain_;
 };
@@ -350,7 +355,7 @@ future<T> make_successful_future(T&& value) {
 
 template<typename T>
 future<T> make_successful_future(const T& value) {
-  return future<T>([&value](promise<T>&& p) {p(T{value}); });
+  return future<T>([value](promise<T>&& p) {p(T{MINICOROS_STD::move(value)}); });
 }
 
 template<typename T>

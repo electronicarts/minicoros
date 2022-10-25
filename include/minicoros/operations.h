@@ -62,9 +62,9 @@ auto when_all(MINICOROS_STD::vector<future<T>>&& futures) {
     auto result_builder = MINICOROS_STD::make_shared<detail::vector_result<T>>(MINICOROS_STD::move(p));
     result_builder->resize(static_cast<int>(chains.size()));
 
-    for (MINICOROS_STD::size_t i = 0; i < chains.size(); ++i) {
-      MINICOROS_STD::move(chains[i]).evaluate_into([i, result_builder] (concrete_result<T>&& result) {
-        result_builder->assign(i, MINICOROS_STD::move(result));
+    for (size_t i = 0; i < chains.size(); ++i) {
+      MINICOROS_STD::move(chains[static_cast<int>(i)]).evaluate_into([i, result_builder] (concrete_result<T>&& result) {
+        result_builder->assign(static_cast<int>(i), MINICOROS_STD::move(result));
       });
     }
   });
@@ -84,8 +84,8 @@ auto when_any(MINICOROS_STD::vector<future<T>>&& futures) {
 
     auto result_builder = MINICOROS_STD::make_shared<detail::any_result<T>>(MINICOROS_STD::move(p));
 
-    for (MINICOROS_STD::size_t i = 0; i < chains.size(); ++i) {
-      MINICOROS_STD::move(chains[i]).evaluate_into([result_builder] (concrete_result<T>&& result) {
+    for (size_t i = 0; i < chains.size(); ++i) {
+      MINICOROS_STD::move(chains[static_cast<int>(i)]).evaluate_into([result_builder] (concrete_result<T>&& result) {
         result_builder->assign(MINICOROS_STD::move(result));
       });
     }

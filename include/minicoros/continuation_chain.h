@@ -81,6 +81,10 @@ public:
     return !activator_;
   }
 
+  void reset() {
+    activator_ = {};
+  }
+
 private:
   continuation<continuation<T>> activator_;
 };
