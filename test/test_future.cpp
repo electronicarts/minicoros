@@ -589,7 +589,7 @@ TEST(future, seq_evalutes_in_order) {
       ASSERT_EQ(val2, true);
       called = true;
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   ASSERT_FALSE(called);
   ASSERT_TRUE(bool{p1});
@@ -631,28 +631,28 @@ TEST(future, partial_application_can_take_subsets) {
       ASSERT_EQ(v1, 123);
       ASSERT_EQ(v2, true);
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   (mc::make_successful_future<int>(123) && mc::make_successful_future<bool>(true) && mc::make_successful_future<void>())
     .then([call_count](int v1) {
       ++*call_count;
       ASSERT_EQ(v1, 123);
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   (mc::make_successful_future<int>(123) && mc::make_successful_future<bool>(true) && mc::make_successful_future<void>())
     .then([call_count](int v1) mutable {
       ++*call_count;
       ASSERT_EQ(v1, 123);
     })
-    .done([] (auto) {});
+   .ignore_result();
 
 
   (mc::make_successful_future<int>(123) && mc::make_successful_future<bool>(true) && mc::make_successful_future<void>())
     .then([call_count] {
       ++*call_count;
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   ASSERT_EQ(*call_count, 4);
 }
@@ -669,7 +669,7 @@ TEST(future, can_return_composed_futures) {
       ASSERT_EQ(i2, 444);
       ++*call_count;
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   ASSERT_EQ(*call_count, 1);
 }
@@ -682,13 +682,13 @@ TEST(future, can_take_mutable_lambdas) {
     .fail([] (int) mutable {
       return mc::failure(123);
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   mc::make_successful_future<std::string>("hello")
     .then([](std::string) mutable {
 
     })
-    .done([] (auto) {});
+   .ignore_result();
 }
 
 TEST(future, fails_can_take_auto_parameter) {
@@ -696,7 +696,7 @@ TEST(future, fails_can_take_auto_parameter) {
     .fail([] (auto error) {
       return mc::failure(std::move(error));
     })
-    .done([] (auto) {});
+   .ignore_result();
 }
 
 TEST(future, fails_can_return_void) {
@@ -704,7 +704,7 @@ TEST(future, fails_can_return_void) {
     .fail([] (auto) -> mc::result<void> {
       return {};
     })
-    .done([] (auto) {});
+   .ignore_result();
 }
 
 TEST(future, make_successful_future_takes_untyped_value) {
@@ -714,13 +714,13 @@ TEST(future, make_successful_future_takes_untyped_value) {
       ASSERT_EQ(values[0], 1);
       ASSERT_EQ(values[1], 4);
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   mc::make_successful_future<std::string>("hello")
     .then([] (std::string value) {
       ASSERT_EQ(value.size(), 5);
     })
-    .done([] (auto) {});
+   .ignore_result();
 }
 
 TEST(future, make_successful_future_takes_copy) {
@@ -729,7 +729,7 @@ TEST(future, make_successful_future_takes_copy) {
     .then([] (std::string value) {
       ASSERT_EQ(value.size(), 5);
     })
-    .done([] (auto) {});
+   .ignore_result();
 }
 
 TEST(future, make_successful_future_takes_move) {
@@ -738,7 +738,7 @@ TEST(future, make_successful_future_takes_move) {
     .then([] (std::string value) {
       ASSERT_EQ(value.size(), 5);
     })
-    .done([] (auto) {});
+   .ignore_result();
 }
 
 TEST(future, finally) {
@@ -795,7 +795,7 @@ TEST(future, captured_promise_does_not_evaluate_rest_of_chain) {
       .then(mc::future<void>([called](auto) {
         *called = true;
       }))
-      .done([] (auto) {}); // Evaluate the chain so that the promise is put in `captured_promise`
+     .ignore_result(); // Evaluate the chain so that the promise is put in `captured_promise`
 
     ASSERT_FALSE(*called);
   }
@@ -836,7 +836,7 @@ TEST(future, functions_compose) {
 
   foo2()
     .then([&] (int val) {result = val; })
-    .done([] (auto) {});
+    .ignore_result();
 
   ASSERT_EQ(result, 3);
 }

@@ -31,7 +31,7 @@ TEST(operations_when_all, resolving_promises_in_reverse_order_remaps_values) {
       ASSERT_TRUE(eq);
       *called = true;
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   ASSERT_FALSE(*called);
 
@@ -79,7 +79,7 @@ TEST(operations_when_any, resolves_to_first_value) {
       ASSERT_EQ(result, 444);
       called = true;
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   ASSERT_FALSE(called);
 
@@ -106,7 +106,7 @@ TEST(operations_when_any, resolves_to_first_result_even_when_it_is_a_failure) {
       called = true;
       return failure(std::move(error_code));
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   ASSERT_FALSE(called);
 
@@ -148,7 +148,7 @@ TEST(operations_when_seq, futures_are_evaluated_in_order) {
       ASSERT_TRUE(eq);
       called = true;
     })
-    .done([] (auto) {});
+   .ignore_result();
 
   ASSERT_FALSE(called);
   ASSERT_TRUE(bool{p1});
