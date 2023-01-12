@@ -52,7 +52,7 @@ void main() {
       // Actually, it's alright not specifying mc::result on .thens that return void
       ASSERT_EQ(s1, s2);
     })
-    .done([] (auto) {}); // To protect against forgetting to handle errors, a chain either needs to be returned
+   .ignore_result(); // To protect against forgetting to handle errors, a chain either needs to be returned
                          // from the current function, or finalized with `done` 
 }
 ```

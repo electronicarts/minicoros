@@ -139,7 +139,7 @@ public:
 
   ~future() {
     if (!chain_.evaluated())
-      MINICOROS_STD::move(*this).done([] (auto) {});
+      MINICOROS_STD::move(*this).ignore_result();
   }
 
   using type = T;
@@ -265,6 +265,11 @@ public:
   template<typename CallbackType>
   void done(CallbackType&& callback) && {
     MINICOROS_STD::move(chain_).evaluate_into(MINICOROS_STD::forward<CallbackType>(callback));
+  }
+
+  /// Explicitly terminate this chain; we've handled everything we need.
+  void ignore_result() && {
+    MINICOROS_STD::move(chain_).evaluate_into([] (auto) {});
   }
 
   /// Transforms this future by executing the downstream callbacks through the given "executor".
