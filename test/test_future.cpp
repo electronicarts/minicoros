@@ -194,34 +194,15 @@ TEST(future, success_type_is_deduced) {
   .done([](auto) {});
 }
 
-TEST(future, then_takes_futures) {
-  using namespace mc;
-  auto num_invocations = std::make_shared<int>();
-
-  auto nested_coro = make_successful_future<int>(123)
-    .then([num_invocations](int value) -> result<int> {
-      ++*num_invocations;
-      return value + 1;
-    });
-
-  make_successful_future<std::string>("hullo")
-    .then(std::move(nested_coro))
-    .then([num_invocations](int value) -> result<int> {
-      ++*num_invocations;
-      ASSERT_EQ(value, 124);
-      return 8086;
-    })
-    .done([](auto) {});
-
-  ASSERT_EQ(*num_invocations, 2);
-}
 
 TEST(future, then_propagates_future_failures) {
   using namespace mc;
   auto num_invocations = std::make_shared<int>();
 
   make_successful_future<void>()
-    .then(make_failed_future<void>(123456))
+    .then([]()-> mc::result<void> {
+      return make_failed_future<void>(123456);
+    })
     .then([num_invocations] {*num_invocations += 1; })
     .fail([num_invocations](int error_code) {
       ASSERT_EQ(error_code, 123456);
@@ -238,7 +219,7 @@ TEST(future, failure_is_not_propagated_to_future) {
   auto num_invocations = std::make_shared<int>();
 
   make_failed_future<void>(12345)
-    .then(future<void>([num_invocations](promise<void>) {*num_invocations += 1; }))
+    .then([num_invocations] {*num_invocations += 1; })
     .done([](auto) {});
 
   ASSERT_EQ(*num_invocations, 0);
@@ -571,57 +552,6 @@ TEST(future, oror_composed_resolve_on_first_call) {
   }
 }
 
-TEST(future, seq_evalutes_in_order) {
-  using namespace mc;
-
-  promise<int> p1;
-  promise<bool> p2;
-  bool called = false;
-
-  auto coro1 = future<int>([&](promise<int> p) {p1 = std::move(p); });
-  auto coro2 = future<bool>([&](promise<bool> p) {p2 = std::move(p); });
-
-  ASSERT_FALSE(bool{p1});
-
-  (std::move(coro1) >> std::move(coro2))
-    .then([&](int val1, bool val2) {
-      ASSERT_EQ(val1, 123);
-      ASSERT_EQ(val2, true);
-      called = true;
-    })
-   .ignore_result();
-
-  ASSERT_FALSE(called);
-  ASSERT_TRUE(bool{p1});
-
-  p1(123);
-
-  ASSERT_FALSE(called);
-  ASSERT_TRUE(bool{p2});
-
-  p2(true);
-
-  ASSERT_TRUE(called);
-}
-
-TEST(future, operations_compose) {
-  mc::future<std::tuple<int, bool, std::string, int>> c = (
-    (
-      (mc::make_successful_future<int>(123) >> mc::make_successful_future<void>())
-      &&
-      (mc::make_successful_future<bool>(false) || mc::make_successful_future<bool>(true))
-    )
-    >>
-    (
-      mc::make_successful_future<std::string>("moof")
-      >>
-      (mc::make_successful_future<int>(444) || mc::make_successful_future<int>(555))
-    )
-  );
-
-  assert_successful_result_eq(std::move(c), {123, false, std::string{"moof"}, 444});
-}
-
 TEST(future, partial_application_can_take_subsets) {
   auto call_count = std::make_shared<int>();
 
@@ -792,10 +722,8 @@ TEST(future, captured_promise_does_not_evaluate_rest_of_chain) {
     });
 
     std::move(fut)
-      .then(mc::future<void>([called](auto) {
-        *called = true;
-      }))
-     .ignore_result(); // Evaluate the chain so that the promise is put in `captured_promise`
+      .then([called] {*called = true; })
+      .ignore_result(); // Evaluate the chain so that the promise is put in `captured_promise`
 
     ASSERT_FALSE(*called);
   }

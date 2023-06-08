@@ -181,24 +181,6 @@ public:
     return future<ReturnType>{MINICOROS_STD::move(new_chain)};
   }
 
-  /// "Embraids" the given future with this future. Will evaluate the given future
-  /// when this future has successfully evaluated.
-  template<typename ReturnType>
-  [[nodiscard]] auto then(future<ReturnType>&& coro) && {
-    // We only need the continuation_chain inside the lambda, so peel off the future. This makes it possible
-    // for future to be a move-only type -- continuation_chain has a stub copy ctor to work with std::function.
-    auto new_chain = MINICOROS_STD::move(chain_).template transform<concrete_result<ReturnType>>([coro_chain = MINICOROS_STD::move(coro).chain()](concrete_result<T>&& result, promise<ReturnType>&& promise) mutable {
-      if (result.success()) {
-        MINICOROS_STD::move(coro_chain).evaluate_into(MINICOROS_STD::move(promise));
-      }
-      else {
-        promise(MINICOROS_STD::move(*result.get_failure())); // Forward just the failure, not the successful return type
-      }
-    });
-
-    return future<ReturnType>{MINICOROS_STD::move(new_chain)};
-  }
-
   /// Creates a new future by transforming this future through the given callback.
   /// The callback is executed iff this future has resulted in a failure, otherwise execution will be
   /// propagated to the next callback.
@@ -317,25 +299,6 @@ public:
 
       MINICOROS_STD::move(rhs_chain).evaluate_into([result_builder] (concrete_result<T>&& result) {
         result_builder->assign(MINICOROS_STD::move(result));
-      });
-    });
-  }
-
-  /// Evaluates this future and the given future in sequential order. Returns the results. If any future returns a
-  /// tuple, the result will be merged.
-  template<typename RhsResultType>
-  [[nodiscard]] auto operator >>(future<RhsResultType>&& rhs) && {
-    using ResultingTupleType = typename detail::tuple_result<T, RhsResultType>::value_type;
-
-    return future<ResultingTupleType>([lhs_chain = MINICOROS_STD::move(*this).chain(), rhs_chain = MINICOROS_STD::move(rhs).chain()](promise<ResultingTupleType>&& p) mutable {
-      auto result_builder = MINICOROS_STD::make_shared<detail::tuple_result<T, RhsResultType>>(MINICOROS_STD::move(p));
-
-      MINICOROS_STD::move(lhs_chain).evaluate_into([result_builder, rhs_chain = MINICOROS_STD::move(rhs_chain)] (concrete_result<T>&& result) mutable {
-        result_builder->assign_lhs(MINICOROS_STD::move(result));
-
-        MINICOROS_STD::move(rhs_chain).evaluate_into([result_builder] (concrete_result<RhsResultType>&& result) {
-          result_builder->assign_rhs(MINICOROS_STD::move(result));
-        });
       });
     });
   }
