@@ -45,7 +45,7 @@ void main() {
     .fail([](int error) -> mc::result<void> {  // Explicitly recover from the error
       return {};
     })
-    .then([] () -> mc::result<std::tuple<int, int>> {  // TODO: hide std::tuple; mc::result<T1, T2, ...>
+    .then([] () -> mc::result<int, int> {
       return sum1(1, 3) && sum2(1, 3);
     })
     .then([] (int s1, int s2) {

@@ -591,7 +591,7 @@ TEST(future, can_return_composed_futures) {
   auto call_count = std::make_shared<int>();
 
   mc::make_successful_future<void>()
-    .then([] () -> mc::result<std::tuple<int, int>> {
+    .then([] () -> mc::result<int, int> {
       return mc::make_successful_future<int>(123) && mc::make_successful_future<int>(444);
     })
     .then([call_count] (int i1, int i2) {

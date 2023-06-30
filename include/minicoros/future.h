@@ -32,16 +32,16 @@
 
 namespace mc {
 
-template<typename T>
+template<typename... Ts>
 class result;
 
 namespace detail {
 
-template<typename T>
+template<typename... Ts>
 struct is_result : public MINICOROS_STD::false_type {};
 
-template<typename T>
-struct is_result<mc::result<T>> : public MINICOROS_STD::true_type {};
+template<typename... Ts>
+struct is_result<mc::result<Ts...>> : public MINICOROS_STD::true_type {};
 
 template<typename T>
 constexpr bool is_result_v = is_result<T>::value;
@@ -55,6 +55,11 @@ struct resulting_successful_type {
 template<typename ResultType>
 struct resulting_successful_type<mc::result<ResultType>> {
   using type = ResultType;
+};
+
+template<typename... Ts>
+struct resulting_successful_type<mc::result<Ts...>> {
+  using type = MINICOROS_STD::tuple<Ts...>;
 };
 
 /// To simplify common usage, returning `void` directly from a then handler is OK.
@@ -82,6 +87,11 @@ struct resulting_failure_type {
 template<typename ResultType, typename FallbackType>
 struct resulting_failure_type<mc::result<ResultType>, FallbackType> {
   using type = ResultType;
+};
+
+template<typename... Ts, typename FallbackType>
+struct resulting_failure_type<mc::result<Ts...>, FallbackType> {
+  using type = MINICOROS_STD::tuple<Ts...>;
 };
 
 /// Specialization for `failure` so that fail handlers can be created without knowing
@@ -206,6 +216,8 @@ public:
   template<typename CallbackType>
   [[nodiscard]] auto fail(CallbackType&& callback) && {
     using ReturnType = decltype(detail::resulting_type_from_failure_callback<T>(MINICOROS_STD::forward<CallbackType>(callback)));
+    using CallbackReturnType = decltype(callback(MINICOROS_STD::declval<MINICOROS_ERROR_TYPE>()));
+    using ResultType = MINICOROS_STD::conditional_t<detail::is_result_v<CallbackReturnType>, CallbackReturnType, mc::result<T>>;
 
     // Transform the continuation chain...
     auto new_chain = MINICOROS_STD::move(chain_).template transform<concrete_result<ReturnType>>([callback = MINICOROS_STD::forward<CallbackType>(callback)] (concrete_result<T>&& result, promise<ReturnType>&& promise) mutable {
@@ -214,7 +226,7 @@ public:
       }
       else {
         // We received a failure, so invoke the callback
-        mc::result<ReturnType> res{callback(MINICOROS_STD::move(result.get_failure()->error))};
+        ResultType res{callback(MINICOROS_STD::move(result.get_failure()->error))};
         res.resolve_promise(MINICOROS_STD::move(promise));
       }
     });
@@ -355,24 +367,26 @@ future<T> make_failed_future(MINICOROS_ERROR_TYPE&& error) {
 ///   return mc::make_successful_future<float>(1.23f);
 /// });
 /// ```
-template<typename T>
+template<typename... Ts>
 class result {
-  using StoredType = MINICOROS_STD::decay_t<T>;
+public:
+  using type = MINICOROS_STD::conditional_t<sizeof...(Ts) == 1, typename MINICOROS_STD::tuple_element<0, MINICOROS_STD::tuple<Ts...>>::type, MINICOROS_STD::tuple<Ts...>>;
+
+private:
+  using StoredType = MINICOROS_STD::decay_t<type>;
 
 public:
-  using type = T;
-
-  result(future<T>&& coro) : value_(MINICOROS_STD::move(coro)) {}
+  result(future<type>&& coro) : value_(MINICOROS_STD::move(coro)) {}
 
   template<typename OtherType>
   result(OtherType&& value) : value_(StoredType{MINICOROS_STD::move(value)}) {}
 
   result(failure&& f) : value_(MINICOROS_STD::move(f)) {}
 
-  void resolve_promise(promise<T>&& promise) {
+  void resolve_promise(promise<type>&& promise) {
     if (StoredType* value = MINICOROS_STD::get_if<StoredType>(&value_))
       MINICOROS_STD::move(promise)(MINICOROS_STD::move(*value));
-    else if (future<T>* coro = MINICOROS_STD::get_if<future<T>>(&value_))
+    else if (future<type>* coro = MINICOROS_STD::get_if<future<type>>(&value_))
       MINICOROS_STD::move(*coro).chain().evaluate_into(MINICOROS_STD::move(promise));
     else if (failure* f = MINICOROS_STD::get_if<failure>(&value_))
       MINICOROS_STD::move(promise)(MINICOROS_STD::move(*f));
@@ -381,7 +395,7 @@ public:
   }
 
 private:
-  MINICOROS_STD::variant<StoredType, future<T>, failure> value_;
+  MINICOROS_STD::variant<StoredType, future<type>, failure> value_;
 };
 
 /// Specalization for callbacks that return `result<void>`.
