@@ -379,7 +379,7 @@ public:
   result(future<type>&& coro) : value_(MINICOROS_STD::move(coro)) {}
 
   template<typename OtherType>
-  result(OtherType&& value) : value_(StoredType{MINICOROS_STD::move(value)}) {}
+  result(OtherType&& value) : value_(StoredType(MINICOROS_STD::move(value))) {}
 
   result(failure&& f) : value_(MINICOROS_STD::move(f)) {}
 
