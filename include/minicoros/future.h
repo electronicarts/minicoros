@@ -133,7 +133,7 @@ auto resulting_type_from_failure_callback(CallbackType&& callback) -> typename r
 /// on top of the continuation chain to make it easier to use. It also has support for exception-like
 /// error handling.
 template<typename T>
-class future {
+class [[nodiscard]] future {
 public:
   static_assert(MINICOROS_STD::is_void_v<T> || MINICOROS_STD::is_copy_constructible_v<T>, "Type must be copy-constructible"); // TODO: unfortunately we need copy-constructors. Get rid of that (might need move-only std::function)
   static_assert(MINICOROS_STD::is_void_v<T> || MINICOROS_STD::is_move_constructible_v<T>, "Type must be move-constructible");
@@ -174,7 +174,7 @@ public:
   ///   });
   /// ```
   template<typename CallbackType>
-  [[nodiscard]] auto then(CallbackType&& callback) && {
+  auto then(CallbackType&& callback) && {
     using ReturnType = decltype(detail::resulting_type_from_successful_callback(MINICOROS_STD::forward<CallbackType>(callback)));
 
     // Transform the continuation chain...
@@ -214,7 +214,7 @@ public:
   ///     });
   /// ```
   template<typename CallbackType>
-  [[nodiscard]] auto fail(CallbackType&& callback) && {
+  auto fail(CallbackType&& callback) && {
     using ReturnType = decltype(detail::resulting_type_from_failure_callback<T>(MINICOROS_STD::forward<CallbackType>(callback)));
     using CallbackReturnType = decltype(callback(MINICOROS_STD::declval<MINICOROS_ERROR_TYPE>()));
     using ResultType = MINICOROS_STD::conditional_t<detail::is_result_v<CallbackReturnType>, CallbackReturnType, mc::result<T>>;
@@ -238,7 +238,7 @@ public:
   /// Called regardless of success or failure. A `concrete_result<T>` will be passed to
   /// the callback, and the callback is expected to return a `concrete_result<A>`.
   template<typename CallbackType>
-  [[nodiscard]] auto map(CallbackType&& callback) && {
+  auto map(CallbackType&& callback) && {
     using ReturnType = decltype(callback(MINICOROS_STD::declval<concrete_result<T>>()));
     static_assert(is_concrete_result_v<ReturnType>, "Callback must return concrete_result<...>");
 
@@ -252,7 +252,7 @@ public:
   }
 
   template<typename CallbackType>
-  [[nodiscard]] auto finally(CallbackType&& callback) && {
+  auto finally(CallbackType&& callback) && {
     return MINICOROS_STD::move(*this).map(MINICOROS_STD::forward<CallbackType>(callback));
   }
 
@@ -271,7 +271,7 @@ public:
   /// that has an `operator ()()`.
   /// Typically used for enqueuing evaluation on a work queue.
   template<typename ExecutorType>
-  [[nodiscard]] future<T> enqueue(ExecutorType&& executor) && {
+  future<T> enqueue(ExecutorType&& executor) && {
     // Take the executor by copy
     return MINICOROS_STD::move(chain_).template transform<concrete_result<T>>([executor](concrete_result<T>&& value, promise<T>&& promise) mutable {
       executor([value = MINICOROS_STD::move(value), promise = MINICOROS_STD::move(promise)] () mutable {
@@ -281,7 +281,7 @@ public:
   }
 
   template<typename RhsResultType>
-  [[nodiscard]] auto operator &&(future<RhsResultType>&& rhs) && {
+  auto operator &&(future<RhsResultType>&& rhs) && {
     using ResultingTupleType = typename detail::tuple_result<T, RhsResultType>::value_type;
 
     return future<ResultingTupleType>([lhs_chain = MINICOROS_STD::move(*this).chain(), rhs_chain = MINICOROS_STD::move(rhs).chain()](promise<ResultingTupleType>&& p) mutable {
@@ -299,7 +299,7 @@ public:
 
   /// Returns the first result from any of the futures. If the first result is a failure,
   /// `||` will return that failure.
-  [[nodiscard]] future<T> operator ||(future<T>&& rhs) && {
+  future<T> operator ||(future<T>&& rhs) && {
     // Unwrap the chains from their future overcoats. Futures aren't copy-constructible, but the chains are. Remove
     // this when we have move-only std::function.
     return future<T>([lhs_chain = MINICOROS_STD::move(*this).chain(), rhs_chain = MINICOROS_STD::move(rhs).chain()](promise<T>&& p) mutable {
