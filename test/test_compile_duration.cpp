@@ -19,259 +19,260 @@ int main()
     {
       p(123);
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int value) -> mc::result<int>
+    .then([](int) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return doStuff();
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return 123;
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return 123;
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return 123;
     })
-    .then([](int&& value) -> mc::result<int>
+    .then([](int&&) -> mc::result<int>
     {
       return 123;
     })
-    .then([](int&& value) -> mc::result<std::string>
+    .then([](int&&) -> mc::result<std::string>
     {
       return failure(123);
     })
-    .then([](std::string&& value) -> mc::result<std::string>
+    .then([](std::string&&) -> mc::result<std::string>
     {
       return "hello";
     })
-    .fail([](int error_code) -> mc::result<std::string>
+    .fail([](int) -> mc::result<std::string>
     {
       return "moofie";
     })
-    .then([](std::string&& value) -> mc::result<std::string>
+    .then([](std::string&&) -> mc::result<std::string>
     {
       return failure(123);
-    }).then([](std::string&& value) -> mc::result<std::string>
+    }).then([](std::string&&) -> mc::result<std::string>
     {
       return "hello";
     })
-    .fail([](int error_code) -> mc::result<std::string>
+    .fail([](int) -> mc::result<std::string>
     {
       return "moofie";
     })
-    .then([](std::string&& value) -> mc::result<std::string>
+    .then([](std::string&&) -> mc::result<std::string>
     {
       return failure(123);
-    }).then([](std::string&& value) -> mc::result<std::string>
+    }).then([](std::string&&) -> mc::result<std::string>
     {
       return "hello";
     })
-    .fail([](int error_code) -> mc::result<std::string>
+    .fail([](int) -> mc::result<std::string>
     {
       return "moofie";
     })
-    .then([](std::string&& value) -> mc::result<std::string>
+    .then([](std::string&&) -> mc::result<std::string>
     {
       return failure(123);
-    }).then([](std::string&& value) -> mc::result<std::string>
+    }).then([](std::string&&) -> mc::result<std::string>
     {
       return "hello";
     })
-    .fail([](int error_code) -> mc::result<std::string>
+    .fail([](int) -> mc::result<std::string>
     {
       return "moofie";
     })
-    .then([](std::string&& value) -> mc::result<std::string>
+    .then([](std::string&&) -> mc::result<std::string>
     {
       return failure(123);
-    }).then([](std::string&& value) -> mc::result<std::string>
+    }).then([](std::string&&) -> mc::result<std::string>
     {
       return "hello";
     })
-    .fail([](int error_code) -> mc::result<std::string>
+    .fail([](int) -> mc::result<std::string>
     {
       return "moofie";
     })
-    .then([](std::string&& value) -> mc::result<std::string>
+    .then([](std::string&&) -> mc::result<std::string>
     {
       return failure(123);
-    }).then([](std::string&& value) -> mc::result<std::string>
+    }).then([](std::string&&) -> mc::result<std::string>
     {
       return "hello";
     })
-    .fail([](int error_code) -> mc::result<std::string>
+    .fail([](int) -> mc::result<std::string>
     {
       return "moofie";
     })
-    .then([](std::string&& value) -> mc::result<std::string>
+    .then([](std::string&&) -> mc::result<std::string>
     {
       return failure(123);
-    }).then([](std::string&& value) -> mc::result<std::string>
+    }).then([](std::string&&) -> mc::result<std::string>
     {
       return "hello";
     })
-    .fail([](int error_code) -> mc::result<std::string>
+    .fail([](int) -> mc::result<std::string>
     {
       return "moofie";
     })
-    .then([](std::string&& value) -> mc::result<std::string>
+    .then([](std::string&&) -> mc::result<std::string>
     {
       return failure(123);
-    });
+    })
+    .ignore_result();
 
 }
