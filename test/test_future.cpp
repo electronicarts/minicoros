@@ -458,30 +458,30 @@ TEST(future, andand_supports_void) {
   }
 }
 
-class type_with_explicit_move_constructor
+class type_without_copy_assignment
 {
 public:
-  type_with_explicit_move_constructor() = default;
-  type_with_explicit_move_constructor(const type_with_explicit_move_constructor&) = default;
-  explicit type_with_explicit_move_constructor(type_with_explicit_move_constructor&&) = default;
+  ~type_without_copy_assignment() = default;
+  type_without_copy_assignment(const type_without_copy_assignment&) = default;
+  type_without_copy_assignment& operator=(const type_without_copy_assignment&) = delete;
 };
 
-TEST(future, andand_supports_type_with_explicit_move_constructor) {
+TEST(future, andand_supports_type_without_copy_assignment) {
   using namespace mc;
 
   (
     make_successful_future<void>()
-    && make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+    && make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
   ).ignore_result();
 
   (
-    make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+    make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
     && make_successful_future<void>()
   ).ignore_result();
 
   (
-    make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
-    && make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+    make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
+    && make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
   ).ignore_result();
 }
 
@@ -579,12 +579,12 @@ TEST(future, oror_composed_resolve_on_first_call) {
   }
 }
 
-TEST(future, oror_supports_type_with_explicit_move_constructor) {
+TEST(future, oror_supports_type_without_copy_assignment) {
   using namespace mc;
 
   (
-    make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
-    || make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+    make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
+    || make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
   ).ignore_result();
 }
 
