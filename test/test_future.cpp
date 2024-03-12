@@ -458,6 +458,33 @@ TEST(future, andand_supports_void) {
   }
 }
 
+class type_with_explicit_move_constructor
+{
+public:
+  type_with_explicit_move_constructor() = default;
+  type_with_explicit_move_constructor(const type_with_explicit_move_constructor&) = default;
+  explicit type_with_explicit_move_constructor(type_with_explicit_move_constructor&&) = default;
+};
+
+TEST(future, andand_supports_type_with_explicit_move_constructor) {
+  using namespace mc;
+
+  (
+    make_successful_future<void>()
+    && make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+  ).ignore_result();
+
+  (
+    make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+    && make_successful_future<void>()
+  ).ignore_result();
+
+  (
+    make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+    && make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+  ).ignore_result();
+}
+
 TEST(future, oror_resolves_to_first) {
   using namespace mc;
 
@@ -550,6 +577,15 @@ TEST(future, oror_composed_resolve_on_first_call) {
     p3({});
     ASSERT_TRUE(called);
   }
+}
+
+TEST(future, oror_supports_type_with_explicit_move_constructor) {
+  using namespace mc;
+
+  (
+    make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+    || make_successful_future<type_with_explicit_move_constructor>(type_with_explicit_move_constructor{})
+  ).ignore_result();
 }
 
 TEST(future, partial_application_can_take_subsets) {
