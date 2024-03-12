@@ -463,7 +463,9 @@ class type_without_copy_assignment
 public:
   ~type_without_copy_assignment() = default;
   type_without_copy_assignment(const type_without_copy_assignment&) = default;
+  type_without_copy_assignment(type_without_copy_assignment&&) = default;
   type_without_copy_assignment& operator=(const type_without_copy_assignment&) = delete;
+  type_without_copy_assignment& operator=(type_without_copy_assignment&&) = delete;
 };
 
 TEST(future, andand_supports_type_without_copy_assignment) {
