@@ -144,7 +144,7 @@ public:
       return;
     }
 
-    lhs_ = MINICOROS_STD::move(*result.get_value());
+    lhs_.emplace(MINICOROS_STD::move(*result.get_value()));
     check_and_resolve();
   }
 
@@ -154,7 +154,7 @@ public:
       return;
     }
 
-    rhs_ = MINICOROS_STD::move(*result.get_value());
+    rhs_.emplace(MINICOROS_STD::move(*result.get_value()));
     check_and_resolve();
   }
 
@@ -191,7 +191,7 @@ public:
       return;
     }
 
-    lhs_ = MINICOROS_STD::move(*result.get_value());
+    lhs_.emplace(MINICOROS_STD::move(*result.get_value()));
     check_and_resolve();
   }
 
@@ -248,7 +248,7 @@ public:
       return;
     }
 
-    rhs_ = MINICOROS_STD::move(*result.get_value());
+    rhs_.emplace(MINICOROS_STD::move(*result.get_value()));
     check_and_resolve();
   }
 

@@ -458,6 +458,35 @@ TEST(future, andand_supports_void) {
   }
 }
 
+class type_without_copy_assignment
+{
+public:
+  ~type_without_copy_assignment() = default;
+  type_without_copy_assignment(const type_without_copy_assignment&) = default;
+  type_without_copy_assignment(type_without_copy_assignment&&) = default;
+  type_without_copy_assignment& operator=(const type_without_copy_assignment&) = delete;
+  type_without_copy_assignment& operator=(type_without_copy_assignment&&) = delete;
+};
+
+TEST(future, andand_supports_type_without_copy_assignment) {
+  using namespace mc;
+
+  (
+    make_successful_future<void>()
+    && make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
+  ).ignore_result();
+
+  (
+    make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
+    && make_successful_future<void>()
+  ).ignore_result();
+
+  (
+    make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
+    && make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
+  ).ignore_result();
+}
+
 TEST(future, oror_resolves_to_first) {
   using namespace mc;
 
@@ -550,6 +579,15 @@ TEST(future, oror_composed_resolve_on_first_call) {
     p3({});
     ASSERT_TRUE(called);
   }
+}
+
+TEST(future, oror_supports_type_without_copy_assignment) {
+  using namespace mc;
+
+  (
+    make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
+    || make_successful_future<type_without_copy_assignment>(type_without_copy_assignment{})
+  ).ignore_result();
 }
 
 TEST(future, partial_application_can_take_subsets) {
