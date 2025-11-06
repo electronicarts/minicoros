@@ -16,6 +16,7 @@
   #include <eastl/variant.h>
   #include <eastl/memory.h>
   #include <eastl/shared_ptr.h>
+  #include <eastl/utility.h>
 
   #ifndef MINICOROS_STD
     #define MINICOROS_STD eastl
@@ -24,6 +25,7 @@
   #include <type_traits>
   #include <variant>
   #include <memory>
+  #include <optional>
 
   #ifndef MINICOROS_STD
     #define MINICOROS_STD std
@@ -351,6 +353,61 @@ future<void> make_successful_future() {
 template<typename T>
 future<T> make_failed_future(MINICOROS_ERROR_TYPE&& error) {
   return future<T>([error = MINICOROS_STD::move(error)](promise<T>&& p) mutable {p(failure{MINICOROS_STD::move(error)}); });
+}
+
+template<typename T>
+class persistent_promise
+{
+public:
+  void resolve(concrete_result<T> value) {
+    if (stored_promise_) {
+      MINICOROS_STD::move(stored_promise_)(MINICOROS_STD::move(value));
+      stored_promise_ = nullptr;
+    }
+    else {
+      stored_value_.emplace(MINICOROS_STD::move(value));
+    }
+  }
+
+  void imbue(promise<T> p) {
+    if (stored_value_) {
+      p(MINICOROS_STD::move(*stored_value_));
+      stored_value_.reset();
+    }
+    else {
+      stored_promise_ = MINICOROS_STD::move(p);
+    }
+  }
+
+private:
+  MINICOROS_STD::optional<concrete_result<T>> stored_value_;
+  promise<T> stored_promise_;
+};
+
+/// An easier way for creating a future so that you get a promise at creation and don't have to wait for the lambda
+/// in the constructor to get called. This function hides the lazy evaluation of minicoros, and in that way, avoids some
+/// common mistakes. The promise can be resolved at any time.
+///
+/// Example:
+/// ```
+/// auto [future, promise] = make_future<int>();
+/// promise(123);
+/// return move(future);
+/// ```
+template<typename T>
+MINICOROS_STD::pair<future<T>, promise<T>> make_future()
+{
+  MINICOROS_STD::shared_ptr<mc::persistent_promise<T>> pp = MINICOROS_STD::make_shared<persistent_promise<T>>();
+
+  auto fut = future<T>([pp](promise<T> p) {
+    pp->imbue(eastl::move(p));
+  });
+
+  promise<T> pp_resolver = [pp](concrete_result<T> result) {
+    pp->resolve(MINICOROS_STD::move(result));
+  };
+
+  return {MINICOROS_STD::move(fut), MINICOROS_STD::move(pp_resolver)};
 }
 
 /// Deals with the various types a callback can return:
